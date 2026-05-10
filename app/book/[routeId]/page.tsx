@@ -4,10 +4,10 @@ import { useParams, useRouter } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import axios from "axios";
 import BottomNav from "@/components/BottomNav";
+import TopNav from "@/components/TopNav";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { buildBookingTransaction } from "@/lib/escrow";
 import dynamic from "next/dynamic";
-
 
 const WalletMultiButton = dynamic(
   () => import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
@@ -34,6 +34,7 @@ export default function BookPage() {
   const [seatCount, setSeatCount] = useState(1);
   const [step, setStep] = useState<"review" | "signing" | "confirmed">("review");
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [txSignature, setTxSignature] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -52,8 +53,8 @@ export default function BookPage() {
   }, [routeId]);
 
   useEffect(() => {
-    if (!publicKey) return;
-    axios.get(`${API}/credits/${publicKey.toBase58()}`).then((r) => setCredits(r.data));
+    const wallet = publicKey?.toBase58();
+    axios.get(`${API}/credits/${wallet}`).then((r) => setCredits(r.data));
   }, [publicKey]);
 
   if (!route) return (
@@ -90,6 +91,7 @@ export default function BookPage() {
 
       const signature = await sendTransaction(tx, connection);
       await connection.confirmTransaction(signature, "confirmed");
+      setTxSignature(signature);
 
       const { data } = await axios.post(`${API}/bookings`, {
         onchainPubkey: signature,
@@ -128,39 +130,92 @@ export default function BookPage() {
         borderBottom: "1px solid rgba(255,255,255,0.07)",
         maxWidth: "1280px", margin: "0 auto",
       }}>
-        <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer" }}>
-          <img src="/logo.png" alt="Angalink" style={{ height: "32px", objectFit: "contain" }} />
+        <button
+          onClick={() => router.push("/")}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", gap: "10px" }}
+        >
+          <img src="/logo.png" alt="Angalink" style={{ height: "30px", objectFit: "contain" }} />
+          <span style={{ fontFamily: "Georgia, serif", fontSize: "17px", color: "#FCDE9C", letterSpacing: "0.08em" }}>Angalink</span>
         </button>
         {mounted && <WalletMultiButton />}
       </header>
 
       {step === "confirmed" ? (
         <div style={{ maxWidth: "560px", margin: "0 auto", padding: "64px 24px", textAlign: "center", animation: "fadeUp 0.5s ease" }}>
-          <div style={{ width: "64px", height: "64px", borderRadius: "50%", border: "1px solid #C4D6B0", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 32px", boxShadow: "0 0 40px rgba(196,214,176,0.2)" }}>
+          <div style={{
+            width: "64px", height: "64px", borderRadius: "50%",
+            border: "1px solid #C4D6B0",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 32px",
+            boxShadow: "0 0 40px rgba(196,214,176,0.2)",
+          }}>
             <span style={{ fontSize: "24px", color: "#C4D6B0" }}>✓</span>
           </div>
-          <p style={{ fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#C4D6B0", marginBottom: "14px" }}>Booking confirmed</p>
-          <h1 style={{ fontFamily: "Georgia, serif", fontSize: "48px", color: "#FCDE9C", fontWeight: "bold", marginBottom: "16px" }}>Seat secured.</h1>
+
+          <p style={{ fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#C4D6B0", marginBottom: "14px" }}>
+            Booking confirmed
+          </p>
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: "48px", color: "#FCDE9C", fontWeight: "bold", marginBottom: "16px" }}>
+            Seat secured.
+          </h1>
           <p style={{ fontFamily: "Georgia, serif", fontSize: "16px", color: "#9CA3AF", lineHeight: "1.8", marginBottom: "48px" }}>
             Your seat on {route.origin} to {route.destination} is held in escrow and releases automatically when your flight departs.
           </p>
-          <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px", textAlign: "left", marginBottom: "32px" }}>
-            {[["Booking ID", bookingId?.slice(0, 20) + "..."], ["Route", `${route.origin} — ${route.destination}`], ["Seats", seatCount.toString()], ["Paid", `$${netUsdc.toFixed(0)} USDC`], ["Discount", `${discountPercent}%`]].map(([l, v]) => (
+
+          <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "32px", textAlign: "left", marginBottom: "24px" }}>
+            {[
+              ["Booking ID", bookingId?.slice(0, 20) + "..."],
+              ["Route", `${route.origin} — ${route.destination}`],
+              ["Seats", seatCount.toString()],
+              ["Paid", `$${netUsdc.toFixed(0)} USDC`],
+              ["Discount", `${discountPercent}%`],
+            ].map(([l, v]) => (
               <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "14px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                 <span style={{ fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#6B7280" }}>{l}</span>
                 <span style={{ fontFamily: "Georgia, serif", fontSize: "15px", color: "#D1D5DB" }}>{v}</span>
               </div>
             ))}
+
+            {txSignature && (
+              <div style={{ paddingTop: "20px", textAlign: "center" }}>
+                <a
+                  href={`https://explorer.solana.com/tx/${txSignature}?cluster=devnet`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    fontFamily: "Arial Narrow, Arial, sans-serif",
+                    fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase",
+                    color: "#FFA552", textDecoration: "none",
+                    display: "inline-flex", alignItems: "center", gap: "6px",
+                  }}
+                >
+                  View on Solana Explorer ↗
+                </a>
+              </div>
+            )}
           </div>
-          <button onClick={() => router.push("/")} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#BA5624" }}>Back to routes</button>
+
+          <button
+            onClick={() => router.push("/")}
+            style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#BA5624" }}
+          >
+            Back to routes
+          </button>
         </div>
       ) : (
-        <div style={{ maxWidth: "1100px", margin: "0 auto", padding: isMobile ? "40px 20px" : "64px 64px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 400px", gap: "48px", alignItems: "start" }}>
+        <div style={{
+          maxWidth: "1100px", margin: "0 auto",
+          padding: isMobile ? "40px 20px" : "64px 64px",
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 400px",
+          gap: "48px",
+          alignItems: "start",
+        }}>
 
           {/* LEFT */}
           <div style={{ animation: "fadeUp 0.4s ease" }}>
 
-            {/* Page heading */}
+            {/* Heading */}
             <div style={{ marginBottom: "40px", paddingBottom: "28px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
               <p style={{ fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "10px", letterSpacing: "0.25em", textTransform: "uppercase", color: "#C4D6B0", marginBottom: "10px" }}>Review and lock</p>
               <h1 style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? "36px" : "52px", color: "#FCDE9C", fontWeight: "bold", lineHeight: "1.05", marginBottom: "8px" }}>
@@ -203,7 +258,9 @@ export default function BookPage() {
                   const active = s.id === escrowStep + 1;
                   return (
                     <div key={s.id} style={{ display: "flex", gap: "16px", paddingBottom: i < 3 ? "24px" : 0, position: "relative" }}>
-                      {i < 3 && <div style={{ position: "absolute", left: "13px", top: "30px", bottom: 0, width: "1px", background: done ? "rgba(255,165,82,0.35)" : "rgba(255,255,255,0.06)" }} />}
+                      {i < 3 && (
+                        <div style={{ position: "absolute", left: "13px", top: "30px", bottom: 0, width: "1px", background: done ? "rgba(255,165,82,0.35)" : "rgba(255,255,255,0.06)" }} />
+                      )}
                       <div style={{
                         width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0,
                         border: done ? "1px solid #FFA552" : active ? "1px solid rgba(255,165,82,0.3)" : "1px solid rgba(255,255,255,0.1)",
@@ -231,8 +288,8 @@ export default function BookPage() {
               <p style={{ fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#4B5563", marginBottom: "16px" }}>Technical specifications</p>
               {[
                 ["Network", "Solana Devnet"],
-                ["Program", "Ge8MXb...GYya"],
-                ["Contract", bookingId ? bookingId.slice(0, 18) + "..." : "Pending signature"],
+                ["Escrow program", "CDZRgr...iChk"],
+                ["Credits program", "DJ27ho...kWaV"],
                 ["Status", step === "signing" ? "pending" : "ready"],
               ].map(([label, val]) => (
                 <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
@@ -290,21 +347,28 @@ export default function BookPage() {
               </p>
             </div>
 
-            {error && <p style={{ fontFamily: "Georgia, serif", fontSize: "14px", color: "#F87171", padding: "0 4px" }}>{error}</p>}
+            {error && (
+              <p style={{ fontFamily: "Georgia, serif", fontSize: "14px", color: "#F87171", padding: "0 4px" }}>{error}</p>
+            )}
 
             {publicKey ? (
-              <button className="lock-btn" onClick={handleBook} disabled={step === "signing"} style={{
-                padding: "18px",
-                background: step === "signing" ? "rgba(255,255,255,0.04)" : "#BA5624",
-                border: step === "signing" ? "1px solid rgba(255,255,255,0.08)" : "none",
-                borderRadius: "12px",
-                fontFamily: "Arial Narrow, Arial, sans-serif",
-                fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase",
-                color: step === "signing" ? "#4B5563" : "#0d0704",
-                cursor: step === "signing" ? "not-allowed" : "pointer",
-                fontWeight: "bold",
-                boxShadow: step === "signing" ? "none" : "0 4px 32px rgba(186,86,36,0.4)",
-              }}>
+              <button
+                className="lock-btn"
+                onClick={handleBook}
+                disabled={step === "signing"}
+                style={{
+                  padding: "18px",
+                  background: step === "signing" ? "rgba(255,255,255,0.04)" : "#BA5624",
+                  border: step === "signing" ? "1px solid rgba(255,255,255,0.08)" : "none",
+                  borderRadius: "12px",
+                  fontFamily: "Arial Narrow, Arial, sans-serif",
+                  fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase",
+                  color: step === "signing" ? "#4B5563" : "#0d0704",
+                  cursor: step === "signing" ? "not-allowed" : "pointer",
+                  fontWeight: "bold",
+                  boxShadow: step === "signing" ? "none" : "0 4px 32px rgba(186,86,36,0.4)",
+                }}
+              >
                 {step === "signing" ? "Signing transaction..." : "🔒 Lock Funds in Escrow"}
               </button>
             ) : (

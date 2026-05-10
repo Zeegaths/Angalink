@@ -12,10 +12,10 @@ const WalletMultiButton = dynamic(
 );
 
 const STEPS = [
-  { n: "01", title: "Link Wallet",    desc: "Connect your Solana wallet to establish your identity and contribution history." },
+  { n: "01", title: "Link Wallet", desc: "Connect your Solana wallet to establish your identity and contribution history." },
   { n: "02", title: "Verify Activity", desc: "Our protocol indexes your on-chain contributions across Superteam, GitHub, and Solana programs." },
-  { n: "03", title: "Earn Credits",   desc: "Every bounty, hackathon, and grant milestone converts into ANGA travel credits." },
-  { n: "04", title: "Redeem & Fly",   desc: "Apply credits at checkout. The more you build, the cheaper it is to move." },
+  { n: "03", title: "Earn Credits", desc: "Every bounty, hackathon, and grant milestone converts into ANGA travel credits." },
+  { n: "04", title: "Redeem & Fly", desc: "Apply credits at checkout. The more you build, the cheaper it is to move." },
 ];
 
 export default function LandingPage() {
@@ -33,7 +33,6 @@ export default function LandingPage() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  useEffect(() => { if (publicKey) router.push("/routes"); }, [publicKey]);
 
   return (
     <main style={{ background: "#0d0704", minHeight: "100vh", overflowX: "hidden" }}>
@@ -60,8 +59,8 @@ export default function LandingPage() {
         position: "relative", zIndex: 10,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          
           <img src="/logo.png" alt="Angalink" style={{ height: "28px", objectFit: "contain" }} />
+          <span style={{ fontFamily: "Georgia, serif", fontSize: "17px", color: "#FCDE9C", letterSpacing: "0.08em" }}>Angalink</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "28px" }}>
           {!isMobile && (
@@ -83,7 +82,7 @@ export default function LandingPage() {
         display: "flex",
         flexDirection: isMobile ? "column" : "row",
         alignItems: "center",
-        overflow: "hidden",
+        overflow: "visible",
       }}>
 
         {/* Plane image — right side, desktop only */}
@@ -157,26 +156,35 @@ export default function LandingPage() {
             maxWidth: "400px",
             marginBottom: "48px",
           }}>
-            Earn travel credits from your on-chain contributions. Fly to conferences, meet builders, and move across emerging markets — without fundraising.
+            Earn travel credits from your on-chain contributions. Book per-seat charters to conferences, meet builders, and move across emerging markets.
           </p>
 
           {/* CTAs */}
-          <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
-            {mounted && <WalletMultiButton />}
-            <button
-              className="cta-secondary"
-              onClick={() => router.push("/routes")}
-              style={{
-                padding: "13px 26px",
-                background: "transparent",
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: "10px",
-                fontFamily: "Arial Narrow, Arial, sans-serif",
-                fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase",
-                color: "rgba(252,222,156,0.5)",
-                cursor: "pointer",
-              }}>Browse Routes</button>
-          </div>
+          {publicKey && mounted ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "360px" }}>
+              <p style={{ fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#C4D6B0", marginBottom: "4px" }}>Where to next?</p>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                <button
+                  onClick={() => router.push("/routes")}
+                  style={{ padding: "13px 24px", background: "#BA5624", border: "none", borderRadius: "10px", fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#0d0704", cursor: "pointer", fontWeight: "bold", boxShadow: "0 0 24px rgba(186,86,36,0.35)" }}>
+                  Browse Routes
+                </button>
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  style={{ padding: "13px 24px", background: "transparent", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(252,222,156,0.6)", cursor: "pointer" }}>
+                  My Dashboard
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+              {mounted && <WalletMultiButton />}
+              <button
+                className="cta-secondary"
+                onClick={() => router.push("/routes")}
+                style={{ padding: "13px 26px", background: "transparent", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", fontFamily: "Arial Narrow, Arial, sans-serif", fontSize: "11px", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(252,222,156,0.5)", cursor: "pointer" }}>Browse Routes</button>
+            </div>
+          )}
         </div>
 
         {/* Mobile plane image */}
@@ -207,9 +215,9 @@ export default function LandingPage() {
           padding: isMobile ? "44px 24px" : "56px 64px",
         }}>
           {[
-            { value: "12+",  label: "Active routes",   color: "#FFA552" },
-            { value: "3K+",  label: "Builders onboard",color: "#C4D6B0" },
-            { value: "0%",   label: "Platform fees",   color: "#FFA552" },
+            { value: "12+", label: "Active routes", color: "#FFA552" },
+            { value: "3K+", label: "Builders onboard", color: "#C4D6B0" },
+            { value: "0%", label: "Platform fees", color: "#FFA552" },
           ].map((stat, i) => (
             <div key={stat.label} style={{ textAlign: "center", borderRight: i < 2 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
               <p style={{ fontFamily: "Georgia, serif", fontSize: isMobile ? "36px" : "52px", color: stat.color, fontWeight: "bold", marginBottom: "6px", textShadow: `0 0 30px ${stat.color}44` }}>{stat.value}</p>
@@ -265,7 +273,7 @@ export default function LandingPage() {
               borderRadius: "20px",
               border: "1px solid rgba(255,165,82,0.35)",
               position: "relative",
-              overflow: "hidden",
+              overflow: "visible",
               minHeight: "280px",
               animation: "fadeUp 0.5s ease 0.25s both",
               boxShadow: "0 0 30px rgba(186,86,36,0.1)",

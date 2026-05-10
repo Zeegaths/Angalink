@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import axios from "axios";
 import BottomNav from "@/components/BottomNav";
+import TopNav from "@/components/TopNav";
 import dynamic from "next/dynamic";
 
 const WalletMultiButton = dynamic(
@@ -38,9 +39,10 @@ export default function RoutesPage() {
 
   useEffect(() => {
     if (!publicKey) return;
-    axios.get(`${API}/credits/${publicKey.toBase58()}`).then((r) => setCredits(r.data));
+    const wallet = publicKey.toBase58();
+    if (!wallet) return;
+    axios.get(`${API}/credits/${wallet}`).then((r) => setCredits(r.data));
   }, [publicKey]);
-
   const discountBps = credits?.discountBps ?? 2500;
 
   return (
