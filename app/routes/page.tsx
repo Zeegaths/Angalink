@@ -34,7 +34,11 @@ export default function RoutesPage() {
   }, []);
 
   useEffect(() => {
-    axios.get(`${API}/routes`).then((r) => { setRoutes(r.data); setLoading(false); });
+    setRoutes([
+      { id: 'route-1', origin: 'NBO', destination: 'EBB', basePriceUsdc: 70, seatsRemaining: 9, totalSeats: 12, departureTs: '2025-08-14T07:00:00Z', isConferenceRoute: false, conferenceCity: null, operatorWallet: '59dj5oBdzRdGpUBjaigr8eh6S1ePKc7eHjZyBrR4LekR' },
+      { id: 'route-2', origin: 'NBO', destination: 'LOS', basePriceUsdc: 70, seatsRemaining: 10, totalSeats: 12, departureTs: '2025-08-20T09:00:00Z', isConferenceRoute: true, conferenceCity: 'Lagos', operatorWallet: '59dj5oBdzRdGpUBjaigr8eh6S1ePKc7eHjZyBrR4LekR' },
+    ]);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
