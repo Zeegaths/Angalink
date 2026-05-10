@@ -49,12 +49,15 @@ export default function BookPage() {
 
   useEffect(() => {
     if (!routeId) return;
-    axios.get(`${API}/routes/${routeId}`).then((r) => setRoute(r.data));
+    const ROUTES: Record<string, any> = {
+      "route-1": { id: "route-1", origin: "NBO", destination: "EBB", basePriceUsdc: 70, seatsRemaining: 9, totalSeats: 12, departureTs: "2025-08-14T07:00:00Z", isConferenceRoute: false, operatorWallet: "59dj5oBdzRdGpUBjaigr8eh6S1ePKc7eHjZyBrR4LekR" },
+      "route-2": { id: "route-2", origin: "NBO", destination: "LOS", basePriceUsdc: 70, seatsRemaining: 10, totalSeats: 12, departureTs: "2025-08-20T09:00:00Z", isConferenceRoute: true, conferenceCity: "Lagos", operatorWallet: "59dj5oBdzRdGpUBjaigr8eh6S1ePKc7eHjZyBrR4LekR" },
+    };
+    setRoute(ROUTES[routeId as string] || ROUTES["route-1"]);
   }, [routeId]);
 
   useEffect(() => {
-    const wallet = publicKey?.toBase58();
-    axios.get(`${API}/credits/${wallet}`).then((r) => setCredits(r.data));
+    setCredits({ tier: "BUILDER", totalScore: 155, discountBps: 5000, discountPercent: 50 });
   }, [publicKey]);
 
   if (!route) return (
@@ -93,18 +96,8 @@ export default function BookPage() {
       await connection.confirmTransaction(signature, "confirmed");
       setTxSignature(signature);
 
-      const { data } = await axios.post(`${API}/bookings`, {
-        onchainPubkey: signature,
-        builderWallet: publicKey.toBase58(),
-        routeId: route.id,
-        seatCount,
-        grossAmountUsdc: grossUsdc,
-        discountBps,
-        netAmountUsdc: netUsdc,
-        flightId,
-      });
-
-      setBookingId(data.id);
+      // Demo mode - skip backend recording
+      setBookingId(signature);
       setStep("confirmed");
     } catch (err: any) {
       setError(err?.message || "Booking failed.");
